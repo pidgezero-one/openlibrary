@@ -10,6 +10,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 from urllib.parse import parse_qsl, quote, unquote, urlencode, urlparse, urlunparse
 
@@ -300,9 +301,13 @@ class BookRecord:
         if self.authors:
             output["authors"] = [
                 {
-                    "name": author.friendly_name,
-                    "birth_date": author.birth_date,
-                    "death_date": author.death_date,
+                    key: value
+                    for key, value in {
+                        "name": author.friendly_name,
+                        "birth_date": author.birth_date,
+                        "death_date": author.death_date,
+                    }.items()
+                    if value is not None
                 }
                 for author in self.authors
             ]
@@ -776,10 +781,10 @@ WHERE {
                 )
 
                 if "birthDate" in obj and "value" in obj["birthDate"]:
-                    contributor.birth_date = obj["birthDate"]["value"]
+                    contributor.birth_date = extract_year(obj["birthDate"]["value"])
 
                 if "deathDate" in obj and "value" in obj["deathDate"]:
-                    contributor.death_date = obj["deathDate"]["value"]
+                    contributor.death_date = extract_year(obj["deathDate"]["value"])
 
                 if contributor_id in map:
                     book_ids = map[contributor_id]
